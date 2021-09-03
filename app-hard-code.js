@@ -39,9 +39,8 @@ const skill_includeAudit = true;
 //const assistant_url = process.env.ASSISTANT_URL;
 
 const assistant_version = "2018-05-01";
-const assistant_apikey = "kQA596L-7i31u13Lzjhqgvab3ZrF4NktS3lednbALa2q";
-const assistant_url =
-"https://api.us-south.assistant.watson.cloud.ibm.com/instances/fcb38c05-368c-4be1-894a-6ff7b18a14a0";
+const assistant_apikey = "<your Assistant instance API key>";
+const assistant_url = "your Assistant instance URL";
 
 //const skill_id = process.env.SKILL_ID;
 //const skill_name = process.env.SKILL_NAME;
@@ -179,8 +178,8 @@ const createSkill = async (assistant) => {
 const getS3 = async (endpoint) => {
   //const cos_apikey = process.env.COS_APIKEY;
   //const cos_resource_instance_id = process.env.COS_RESOURCE_INSTANCE_ID;
-  const cos_apikey = "N-2in3pXNajs-Q92tC3KHnshucmFLQHw6yk2vb_Zouvb";
-  const cos_resource_instance_id = "crn:v1:bluemix:public:cloud-object-storage:global:a/9a8243d46bd86711a6f040140569d717:5bf78f02-095c-4992-bb97-92cff9a16e7b::";
+  const cos_apikey = "<your IBM Cloud Object Storage instance API key>";
+  const cos_resource_instance_id = "<your IBM Cloud Object Storage instance ID>";
   let s3Options;
 
   if (cos_apikey != "") {

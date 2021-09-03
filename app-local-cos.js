@@ -38,11 +38,6 @@ const assistant_version = process.env.ASSISTANT_VERSION;
 const assistant_apikey = process.env.ASSISTANT_APIKEY;
 const assistant_url = process.env.ASSISTANT_URL;
 
-//const assistant_version = "2018-05-01";
-//const assistant_apikey = "NpRvDAqlGsFQFYnA-qq5ajGUnlkA8w8NwxHIs-Yjzn9H";
-//const assistant_url =
-("https://api.us-south.assistant.watson.cloud.ibm.com/instances/ee2aa119-b1e8-458a-a51a-051fc3048346");
-
 //const skill_id = process.env.SKILL_ID;
 //const skill_name = process.env.SKILL_NAME;
 

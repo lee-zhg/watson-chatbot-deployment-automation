@@ -187,7 +187,7 @@ const getS3 = async (endpoint) => {
   //const cos_apikey = process.env.COS_APIKEY;
   //const cos_resource_instance_id = process.env.COS_RESOURCE_INSTANCE_ID;
   const cos_apikey = "<your IBM Cloud Object Storage instance API key>";
-  const cos_resource_instance_id = "your IBM Cloud Object Storage instance ID";
+  const cos_resource_instance_id = "<your IBM Cloud Object Storage instance ID>";
   let s3Options;
 
   if (cos_apikey != "") {
