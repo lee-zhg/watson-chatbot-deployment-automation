@@ -1,0 +1,29 @@
+
+To bind Watson service instance to cloud function:
+	ibmcloud fn service bind conversation "assistant-operation/assistant-deployment" --instance "Watson Assistant-CVS-IBM-Garage" --keyname "Service_credential_Manual"
+
+
+To bind COS service instance to cloud function:
+	ibmcloud fn service bind cloud-object-storage "assistant-operation/assistant-deployment" --instance "Cloud Object Storage-CVS-IBM-Garage" --keyname "cos-ibm-garage-assistant-operation"
+
+
+To retrieve cloud function parameters
+	ibmcloud fn action get "assistant-operation/assistant-deployment" parameters
+
+
+
+
+
+To retrieve all service instance
+	ibmcloud resource  service-instances
+
+To retrieve detail of a service instance to SEE the "service name"
+	ibmcloud resource  service-instance "Watson Assistant-CVS-IBM-Garage"
+	ibmcloud resource  service-instance "Cloud Object Storage-CVS-IBM-Garage"
+
+To retrieve all service credential
+	ibmcloud resource service-keys
+
+To retrieve a specific service key
+	ibmcloud resource service-key cos-ibm-garage-assistant-operation 
+
