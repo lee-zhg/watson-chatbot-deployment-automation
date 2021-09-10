@@ -12,6 +12,38 @@ To retrieve cloud function parameters
 
 
 
+To Bind Cloud Function package `assistant-operation` and Cloud Object Storage instance.
+    ibmcloud fn service bind cloud-object-storage $CF_PACKAGE --instance $S3_NAME --keyname $S3_CREDENTIAL
+
+To Bind Cloud Function package `assistant-operation` and Watson Assistant instance.
+    ibmcloud fn service bind conversation $CF_PACKAGE --instance $ASSISTANT_NAME --keyname $ASSISTANT_CREDENTIAL
+
+To Verify the binding. (You should see one `cloud-object-storage` credential in the package)
+    ibmcloud fn package get $CF_PACKAGE
+
+
+
+
+To retrieve cloud function trigger
+	ibmcloud fn trigger get mytrigger
+
+To create a new credential for Cloud Object Storage instance
+	ibmcloud resource service-key-create ibm-garage-cos-assistant-operation --instance-name "Cloud Object Storage-ed"
+
+To create a new credential for Watson Assistant instance
+	ibmcloud resource service-key-create ibm-garage-assistant-operation --instance-name "Watson Assistant-j3"
+
+
+
+
+To create rule
+	ibmcloud fn rule create assistant-auto-deployment-rule assistant-auto-deployment assistant-operation/assistant-deployment
+	
+To delete rule
+	ibmcloud fn rule delete assistant-auto-deployment-rule
+
+
+
 
 
 To retrieve all service instance

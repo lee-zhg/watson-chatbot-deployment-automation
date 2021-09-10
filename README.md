@@ -1,57 +1,45 @@
 # Watson Assistant Skill Deployment Automation
 
-`Actions skill` feature in `Watson Assistant` offers an intuitive and non-technical way to build a chatbot quickly. It requires no development experience or training, although it embeds the object-oriented concept. 
-
-Basically, you breaks down your complex conversation flow into individual `actions`. Each action takes care of the conversation for a single task only, for example, checking order status, inquiring photo price or inquirying medicine information. `Actions skill` fabricates multiple actions (multiple simple conversations) together and makes the inter-connections of coversations between multiple subjects. As the result, your chatbot can engage a real-world conversation with the end users.
-
-This approach dramatically reduces the complexity of the chatbot building process. It puts the power of AI in the hands of everyday citizen. Building an action is as easy as writing down the conversation flow to carry out an individual task. After you build all necessay actions, AI behind the `actions skill` takes care of the rest.
+One of the administrator's tasks is to deploy the Watson Assistant skill to production system, after it's developed in the development environment and verified in the testing environment. You may perform the deployment task manually via the UI. This repo discusses how you can automate the task.
 
 
-## New Ways to Build Chatbot
+## Overview and Components
 
-When building an action, you start by defining a set of user input examples. This is extremely similar to defining an `intent`. In fact, an intent is built for you automatically behind the scene. But, the intent is invisible from developers (as well as end users) perspective when working with action and actions skill. 
+When you deploy a skill to Watson Assistant, you uploads a JSON input file which provides the skill definition. It can be done manually on the UI or programatically by calling Assistant API. As you are going to automate the process, this exercise will deploy skill through API calls.
 
-There is no explicit `entity` concept either, when building an action. You simply define what the bot responses are. Entities are built for you automatically behind the scene. So, the entity is also invisible from developers (as well as end users) perspective when working with action and actions skill. 
+Watson Assistant skill JSON file can be stored in different places, in local file system, in remote file system, in cloud and etc. For simplicity ad demonstration purpose, this repo stores Watson Assistant skill JSON file in IBM Cloud Object Storage bucket.
 
-An action contains complete conversation flow to fulfill a single task or to cover a single subject. The action also takes care of related `intent` and `entities`. Everything for the conversation covering the task/subject is encapsulated in the `action`. Whenever you need to "talk" about the subject, the same action can be re-used.
+You also have choices of how you develop and deploy your code for the automation. This repo provides Node.js sample code. The code is deployed as IBM Cloud Function for simplicity reason.
 
-A single action is not designed to stretch across multiple subjects or intents. Complex conversation flow involving multiple subjects, must be broken down into individual actions.
-
-`Actions skill` is non-technical-users friendly. User inputs (entities) are stored automatically in variables with descriptive reference. Actions as individual dialog components can be re-arranged and moved freely. The order of the actions in an `actions skill` is irrelavent. 
+!["watson-assistant-deployment-architecture"](docs/images/architecture01.png)
 
 
-## More Features is Coming
+This repo utilizes 3 IBM Cloud services to automate Watson Assistant skill deployment process
+- Watson Assistant
+- Cloud Object Storage
+- Cloud Function
 
-`Actions skill` is relatively new in `Watson Assistant`. It offers many great advantages over the traditional `dialog skill` and likely presents future direction of Watson Assistant.
-- intuitive and non-technical-users friendly
-- simplicity
-- seamless switching between actions
-- etc.
-
-Some of features are still pending at the time of this writing.
-- skill webhook
-- pattern entity
-- refer action within dialog skill
+When you run your Watson Assistant instance in IBM Cloud, this architecture makes it completely self-contained in one environment.
 
 
-## Use Case
+## Flow and Use Case
 
-You are going to build a chatbot covering 4 subjects
-- inquire order status
-- inquire photo price
-- inquire medicine information
-- inquire store hours
+There are different options to automate a Watson Assistant skill deployment. In this repo, the following use case is used for discussion.
 
-Sample `actions skill` `skill-photo-shop-action.json` is provided in `data/` subfolder. It can serve as the starting point.
+1. A skill JSON file is copied/moved to a bucket of IBM Cloud Object Storage when it's ready to be deployed to production system.
+1. The arrival JSON file in the bucket sends a notification to the Cloud Function trigger.
+1. The Cloud Function trigger activates the Cloud Function action
+1. The Cloud Function action makes S3 API calls to retrieve JSON file from S3 bucket.
+1. The Cloud Function action makes Watson Assistant API calls and deploys the Watson Assistant skill.
 
-Action `inquire store hours` will be developed during the exercise.
+> Note: moving JSON file to a S3 bucket can be done manually or the result of another pipeline or automation process. How to completely automate the entire Watson Assistant administration tasks is out of discussion scope of this repo.
 
 
 ## Exercise Flow
 
 ### Step 1 - Clone the Repository
 
-The repo provides sample actions skill `skill-photo-shop-action.json` as the starting point of the exercise.
+The repo provides sample Node.js code `app.js` as the starting point of the exercise. Feel free to modify the code if you have specific requirements
 
 1. Open a `terminal` window on your local machine.
 
@@ -60,351 +48,450 @@ The repo provides sample actions skill `skill-photo-shop-action.json` as the sta
 1. Clone the repo
 
     ```
-    git clone https://github.com/lee-zhg/waston-chatbot-action-skill
+    git clone https://github.com/lee-zhg/watson-chatbot-deployment-automation
     ```
 
-1. The sample actions skill `skill-photo-shop-action.json` locate in the `/data` sub-folder.
-
-
-### Step 2 - Watson Discovery Service
-
-Integration of `Watson Assistant` and `Watson Discovery` services is discussed in repo https://github.com/lee-zhg/waston-chatbot-discovery-integration. 
-
-If you intend to have your chatbot cover all 4 above subjects, you may complete the integration exercise before continue in the exercise in this repo.
-
-If you intend to not have your chatbot cover `inquire medicine information` subject, you may simply skip the `Watson Discovery` related deployment and configuration, and continue the exercise in this repo.
-
-
-### Step 3 - Watson Assistant Service
-
-In this section, you add one additional action to a sample `actions skill` to cover a new subject `inquire store hours`.
-
-
-#### Step 3.1 - Import Sample Actions Skill
-
-To save time, you start the chatbot development from a sample actions skill `skill-photo-shop-action.json`. It can be found in subfolder `data/`.
-
-The sample chatbot covers 3 subjects
-- inquiee order status
-- inquire photo price
-- inquire medicine information
-
-
-#### Step 3.2 - Create new Action
-
-Now, you are going to add one new `action` to cover the subject `inquire store hours`.
-
-1. Login to IBM Cloud.
-
-1. Search and Open the `Watson Assistant` instance.
-
-1. Select `Launch Watson Assisatnt` button on the `Manage` tab.
-
-1. Navigate to `Skill` tab.
-
-1. Select the `photo-shop-action` tile and open it. This is the `actions skill` that you imported in the previous section.
-
-    !["Preview link"](docs/images/assistant-01.png)
-
-1. Select `New action` button.
-
-1. Type "store hours" in the `What does your customer say to start this interaction?`  field.
-
-    >Note: you should provide many examples of what your customer says. This is the first example and it's used as the action name.
-
-1. `Save`.
-
-1. Optionally, you may rename the action.
-
-1. Select `Customer starts with` tile in the left pane.
-
-    !["Preview link"](docs/images/assistant-02.png)
-
-1. In the `Enter a phrase` field under `store hours`, enter a few additional examples of what a customer may say when saking for store hours. For example,
-
-    - what is you store hours
-    - when do you open tomorrow
-    - when do you close today
-    - do you open on Saturday
-    - do you close on Sunday
-
-1. Press `Enter` key or tab out the field after one example is enter.
-
-    !["Preview link"](docs/images/assistant-03.png)
-
-1. Optionally, select `save` icon to save the changes.
-
-1. Select `Step 1` in the left pane.
-
-1. In the `Assistant says` field, enter
+1. Navigate to the folder where the repo is downloaded.
 
     ```
-    Store hours:
-
-    Monday to Friday:   10:00am - 8:00pm
-    Saturday:           8:00am  - 3:00pm
-    Sunday:             Closed
+    cd watson-chatbot-deployment-automation
     ```
 
-    !["Preview link"](docs/images/assistant-04.png)
-
-1. Change `And then` field to `End the action`.
-
-1. Optionally, `save` the changes.
-
-1. Selecth `Preview` button at the bottom-right.
-
-1. Enter `store hour`.
-
-1. The chatbot replies
-
-    ```
-    Store hours:
-
-    Monday to Friday:   10:00am - 8:00pm
-    Saturday:           8:00am  - 3:00pm
-    Sunday:             Closed
-    ```
+> Note: The repo also provides sample codes that comsume input parameters in different ways. For exmaple, taking a local JSON file as the source file when deploying a new Watson Assistant skill.
 
 
-#### Step 3.3 - Create Assistant
+### Step 2 - Configure IBM Cloud Object Storage
 
-To create a new `assistant`,
-
-1. Navigate to the `Assistant` tab in the left pane.
-
-1. Select `Create assistant`.
-
-1. Enter `photo-shop` in the `Name` field.
-
-1. `Create assistant`.
-
-    !["watson-discovery"](docs/images/assistant-05.png)
-
-1. Click `Add an actions or dialog skill` link.
-
-1. Select `photo-shop-action` tile.
-
-    > Note: if you choose to not integrate with `Watson Discovery` service, you may skip the rest of this section.
-
-1. Click `Add search skill` link.
-
-1. Select `medicine-info-search` tile.
-
-    !["watson-discovery"](docs/images/assistant-06.png)
+A bucket in IBM Cloud Object Storage is used as a file storage to store Watson Assistant JSON skill file.
 
 
-### Step 4 - Verification
+#### Step 2.1 - Configure IBM Cloud Shell for your IBM Cloud Object Storage Instance
 
-You have developed and deployed a chatbot based on `actions skill`. Now, you can run couple of tests and ensure that the chatbot works in the same way as if it's built via `dialog skill`.
+You must have an IBM Cloud Object Storage instance for the remaining of the exercise. If you don't have one, create one. 
 
-The chatbot is built answer inquries in 4 subject areas.
-- inquire order status
-- inquire photo price
-- inquire medicine information
-- inquire store hours
+To identify your IBM Cloud Object Storage Instance name,
 
-You may ask any related questions in any order. The chatbot can provide answers as if it is built via `dialog skill`. You won't tell any difference if you only ask basic questions and complete conversation flow of each subject.
+1. Login to IBM Cloud in a browser.
 
-To run basic test cases,
+1. Open the `IBM Cloud Shell`. The `IBM Cloud Shell` is opened in a separate tab.
 
-1. Click `Preview` button at the top-right corner of the `Assistant` window.
+1. Since you were authenticated when you logined to the IBM Cloud, you are automatically autenticated in the `IBM Cloud Shell`.
+
+1. Target a resource group by executing
+
+   ```
+   ibmcloud target -g Default
+   ```
+
+   > Note: you may use a different resource group in your account.
 
 
-#### Step 4.1 - Still Works in the Same Way as Before
-
-Chatbot built in `actions skill` and chatbot built in `dialog skill` work similarly. 
-
-
-##### Step 4.1.1 - Inquire Order Status
-
-1. Enter `order status`.
-
-1. The chatbot replies 
+1. Retrieve all services
 
     ```
-    I can help checking your order status
-    What is your order number?
+    ibmcloud resource service-instances
     ```
-1. Enter `123`.
 
-1. The chatbot replies 
+1. Sample output looks like
 
     ```
-    Order 123 will be ready in 30 minutes.
+    Name                                Location   State    Type   
+    IBM Log Analysis-cb                 us-east    active   service_instance   
+    IBM Cloud Monitoring-pe             us-east    active   service_instance   
+    kube-certmgr-c4f9d9pd0psfkjhab1bg   us-south   active   service_instance   
+    Cloudant-bv                         us-south   active   service_instance   
+    Language Translator-14              us-south   active   service_instance   
+    Watson Assistant-j3                 us-south   active   service_instance   
+    Speech to Text-av                   us-south   active   service_instance   
+    Text to Speech-hu                   us-south   active   service_instance   
+    Watson Studio-yv                    us-south   active   service_instance   
+    IBM Cognos Dashboard Embedded-n5    us-south   active   service_instance   
+    Cloud Object Storage-ed             global     active   service_instance   
+    Cloud-Function-NS                   us-south   active   service_instance   
+    Certificate Manager-ym              us-south   active   service_instance   
+    Db2-ul                              us-south   active   service_instance   
+    Watson Discovery-4m                 us-south   active   service_instance   
+    Databases for Redis-eg              us-south   active   service_instance   
+    ```
+
+1. For the above example, `Cloud Object Storage-ed` is the name of your s3 instance.
+
+1. Store the Cloud Object Storage instance name in environment variable.
+
+    ```
+    export S3_NAME="Cloud Object Storage-ed"
+    ```
+
+1. Retrieve additional information for your IBM Cloud Object Storage instance.
+
+    ```
+    ibmcloud resource  service-instance <your IBM Cloud Object Storage instance name>
+    ```
+
+    For example,
+
+    ```
+    ibmcloud resource  service-instance "Cloud Object Storage-ed"
+    ```
+
+1. Sample output looks like
+
+    ```
+    Name:                  Cloud Object Storage-ed   
+    ID:                    crn:v1:bluemix:public:cloud-object-storage:global:a/d31616cb766c4803baf1441fbd96b066:a21da977-07c2-41ff-a2f4-a90134be92d0::   
+    GUID:                  a21da977-07c2-41ff-a2f4-a90134be92d0   
+    Location:              global   
+    Service Name:          cloud-object-storage   
+    Service Plan Name:     standard   
+    Resource Group Name:   Default   
+    State:                 active   
+    Type:                  service_instance   
+    Sub Type:                 
+    Created at:            2021-08-19T17:52:45Z   
+    Created by:            Max.Simpson@ibm.com   
+    Updated at:            2021-08-19T17:52:47Z   
+    Last Operation:                        
+                        Status    create succeeded      
+                        Message   Completed create instance operation   
+    ```
+
+1. In the above example, `a21da977-07c2-41ff-a2f4-a90134be92d0` is the `GUID`.
+
+1. In the above example, `crn:v1:bluemix:public:cloud-object-storage:global:a/d31616cb766c4803baf1441fbd96b066:a21da977-07c2-41ff-a2f4-a90134be92d0::` is the `ID`.
+
+1. Store `GUID` in environment variable.
+
+    ```
+    export S3_GUID="a21da977-07c2-41ff-a2f4-a90134be92d0"
+    ```
+
+1. Confirm the `ID` in the environment variable.
+
+    ```
+    echo $S3_GUID
+    ```
+
+1. Configure s3 plugin configuration to point to your IBM Cloud Object Storage instance.
+
+    ```
+    ibmcloud cos config crn --crn $S3_GUID
+    ```
+
+1. Verify the s3 plugin configuration.
+
+    ```
+    ibmcloud cos config list
+    ```
+
+1. Sample output looks like
+
+    ```
+    Key                     Value   
+    Last Updated            Thursday, September 09 2021 at 19:03:05   
+    Default Region          us-south   
+    Download Location       /Users/leezhang/Downloads   
+    CRN                     a21da977-07c2-41ff-a2f4-a90134be92d0   
+    AccessKeyID                
+    SecretAccessKey            
+    Authentication Method   IAM   
+    URL Style               VHost   
+    Service Endpoint         
     ```
 
 
-##### Step 4.1.2 - Inquire Photo Price
+#### Step 2.2 - Create a Bucket
 
-1. Enter `print photos`.
+To create a new bucket `cos-ibm-garage-assistant-operation-<your initial>` in your IBM Cloud Object Storage instance,
 
-1. The chatbot replies 
-
-    ```
-    What size of printing would you like? Choices include: 4 by 6 inch, 6 by 8 inch, 8 by 8 inch, and 8 by 10 inch.
-    ```
-
-1. The chatbot also provides a list of options.
-
-1. Enter `4x6`.
-
-1. The chatbot replies 
+1. Store bucket name `cos-ibm-garage-assistant-operation-<your initial>` in a environment variable.
 
     ```
-    What photo finish do you want? Choices include glossy, matte, or card stock?
+    export BUCKET_NAME="cos-ibm-garage-assistant-operation-<your initial>"
     ```
 
-1. The chatbot provides 3 options
-    - matte
-    - glossy
-    - Switch to Order Status action
-
-1. Enter or select `glossy`.
-
-1. The chatbot replies 
+1. Execute command
 
     ```
-    Thank you for your inquiry. One print of 4 by 6 inch photo in glossy finish is $0.99. (4 by 6 inch, glossy)
+    ibmcloud cos create-bucket --bucket $BUCKET_NAME --region us-south --class SMART
     ```
 
-
-##### Step 4.1.3 - Inquire Medicine Information
-
-1. Enter `what is aspirin dosage?`.
-
-1. The chatbot replies 
-
+1. Optionally, you may pass your IBM Cloud Object Storage instance as part of the above command
     ```
-    Checking ...
-    I searched my knowledge base and found this information which might be useful:
-
-    Bayer Aspirin dose ranges from 50 mg to 6000 mg daily.
+    ibmcloud cos create-bucket --bucket $BUCKET_NAME --region us-south --class SMART --ibm-service-instance-id $S3_ID
     ```
 
-
-##### Step 4.1.4 - Inquire Store Hours
-
-1. Enter `what is your store hours?`.
-
-1. The chatbot replies 
+1. Verify the new bucket was created successfully.
 
     ```
-    Store hours
-    Monday to Friday: 10:00am - 8:00pm
-    Saturday: 8:00am - 3:00pm
-    Sunday: Closed
+    ibmcloud cos bucket-location-get --bucket $BUCKET_NAME
+    ```
+
+Alternatively, you may also create S3 bucket via IBM Cloud UI.
+
+
+#### Step 2.3 - Create Cloud Object Storage Credential
+
+For simplicity, a new credential `ibm-garage-cos-assistant-operation` is created for your Cloud Object Storage instance. Alternatively, you may use the existing credential.
+
+1. Store the new credential name in a environment variable.
+
+    ```
+    export S3_CREDENTIAL="ibm-garage-cos-assistant-operation"
+    ```
+
+1. Create a new credential `ibm-garage-cos-assistant-operation` for your Cloud Object Storage instance.
+
+    ```
+    ibmcloud resource service-key-create $S3_CREDENTIAL --instance-name $S3_NAME
+    ```
+
+1. Verify the new credential.
+
+    ```
+    ibmcloud resource service-key $S3_CREDENTIAL 
     ```
 
 
-#### Step 4.2 - Switch Between Actions without Digression
+### Step 3 - Configure Watson Assistant
 
-One of the main advantage of `actions skill` is to be able to swtich to completely different subject in the mid of a conversation. This can be done easily via `actions skill` as it's one of the built-in features. 
+For simplicity, a new credential `ibm-garage-assistant-operation` is created for your Watson Assistant instance. Alternatively, you may use the existing credential.
 
-`Dialog skill` also supports the subject switching with development efforts.
-
-When you perform a subject switching in the mid of a conversation, you may choose to not return to the original conversation after the new conversation completes. So, when the new conversation completes, both new conversation and the original conversation completes.
-
-You run a test case to end both new and original conversations in this section. The original conversation won't be resumed.
-
-1. Select `Restart conversation` on the top.
-
-1. You start a `inquire photo cost` conversation by entering `print photo`.
-
-1. The chatbot replies 
+1. In your `IBM Cloud Shell`, store the new credential name in a environment variable.
 
     ```
-    What size of printing would you like? Choices include: 4 by 6 inch, 6 by 8 inch, 8 by 8 inch, and 8 by 10 inch.
+    export ASSISTANT_CREDENTIAL="ibm-garage-assistant-operation"
     ```
 
-1. The chatbot also provides a list of options. 
-
-1. Switch to `Order Status` conversation by entering `switch to order status action`.
-
-1. The chatbot replies 
+1. Retrieve all services.
 
     ```
-    Switch to Order Status action ...
-    
-    I can help checking your order status
-    What is your order number?
+    ibmcloud resource service-instances
     ```
 
-1. You continue the `Order Status` conversation by entering `123`.
-
-1. The chatbot replies with the message below and completes both new conversation and the original one.
+1. Sample output looks like
 
     ```
-    Order 123 will be ready in 30 minutes.
+    Name                                Location   State    Type   
+    IBM Log Analysis-cb                 us-east    active   service_instance   
+    IBM Cloud Monitoring-pe             us-east    active   service_instance   
+    kube-certmgr-c4f9d9pd0psfkjhab1bg   us-south   active   service_instance   
+    Cloudant-bv                         us-south   active   service_instance   
+    Language Translator-14              us-south   active   service_instance   
+    Watson Assistant-j3                 us-south   active   service_instance   
+    Speech to Text-av                   us-south   active   service_instance   
+    Text to Speech-hu                   us-south   active   service_instance   
+    Watson Studio-yv                    us-south   active   service_instance   
+    IBM Cognos Dashboard Embedded-n5    us-south   active   service_instance   
+    Cloud Object Storage-ed             global     active   service_instance   
+    Cloud-Function-NS                   us-south   active   service_instance   
+    Certificate Manager-ym              us-south   active   service_instance   
+    Db2-ul                              us-south   active   service_instance   
+    Watson Discovery-4m                 us-south   active   service_instance   
+    Databases for Redis-eg              us-south   active   service_instance   
     ```
 
-    !["watson-discovery"](docs/images/assistant-07.png)
+1. For the above example, `Watson Assistant-j3` is the name of your Watson Assistant instance.
 
-1. In `Step 2` of `photos price inquiry` action, you can find detail information of this subject switching configuration. 
-
-    - `And then` is set to `Go to another action`.
-    - `Goes to action` is set to `photo status`.
-    - `Upon return` property is set to `End current action`.
-
-    !["watson-discovery"](docs/images/assistant-08.png)
-
-
-#### Step 4.3 - Switch Between Actions with Corss-Action Digression
-
-When you perform a subject switching in the mid of a conversation, you may also choose to return to the original conversation after the new conversation completes. So, when the new conversation completes, the original conversation resumes.
-
-You run a test case to resume the original conversations in this section. 
-
-1. Select `Restart conversation` on the top.
-
-1. You start a `inquire photo cost` conversation by entering `print 4x6 photo`.
-
-1. The chatbot replies 
+1. Store the Watson Assistant instance name in environment variable.
 
     ```
-    What photo finish do you want? Choices include glossy, matte, or card stock?
+    export ASSISTANT_NAME="Watson Assistant-j3"
     ```
 
-1. The chatbot also provides a list of options. 
-
-1. Switch to `Order Status` conversation by entering `switch to order status action`.
-
-1. The chatbot replies 
+1. Create a new credential `ibm-garage-cos-assistant-operation` for your Cloud Object Storage instance.
 
     ```
-    Switching to Order Status action after collecting photo size information ...
-    
-    Changed mind? I can help checking order status
-    What is your order number?
+    ibmcloud resource service-key-create $ASSISTANT_CREDENTIAL --instance-name $ASSISTANT_NAME
     ```
 
-1. You continue the `Order Status` conversation by entering `123`.
-
-1. The chatbot completes the new conversation and resumes the original one.
+1. Verify the new credential.
 
     ```
-    Order 123 will be ready in 30 minutes.
-
-    Back to your original inquiry.
-    What photo finish do you want? Choices include glossy, matte, or card stock?
+    ibmcloud resource service-key $ASSISTANT_CREDENTIAL
     ```
 
-1. You can resume the original conversation by entering `glossy`.
 
-1. The chatbot completes the original conversation.
+### Step 4 - Configure IBM Cloud Function
+
+In this section, you deploy your code as a service in IBM Cloud Function. Because the Cloud Functions is not the focus of the repo, basic CLI commands are used to show the procedure.
+
+
+#### Step 4.1 - Deploy Cloud Function
+
+1. Still in your `IBM Cloud Shell`.
+
+1. Optionally, create a Cloud Function Namespace. Execute
+
+   ```
+   ibmcloud fn namespace create <my namespace> --description "my namespace"
+   ```
+
+1. Verify the new namespace was created.
+
+   ```
+   ibmcloud fn namespace list
+   ```
+
+1. Set the new namespace as default
+
+   ```
+   ibmcloud fn property set --namespace <my namespace>
+   ```
+
+1. Create package
+
+   ```
+   ibmcloud fn package create assistant-operation
+   ```
+
+1. Store new package name `assistant-operation` in environment variable.
 
     ```
-    Thank you for your inquiry. One print of 4 by 6 inch photo in Switch to Order Status action finish is $0.99. (null, null)
+    export CF_PACKAGE="assistant-operation"
     ```
 
-    !["watson-discovery"](docs/images/assistant-09.png)
+1. Create action for setup using Node.js environment
 
-1. In `Step 5` of `photos price inquiry` action, you can find detail information of this subject switching configuration. 
-    - `And then` is set to `Go to another action`.
-    - `Goes to action` is set to `photo status`.
-    - `Upon return` property is set to `Continue`.
+   ```
+   ibmcloud  fn  action  create  assistant-operation/assistant-deployment  app.js  --kind nodejs:12  --web  true  --web-secure  <YOURSECRET>
+   ```
 
-    !["watson-discovery"](docs/images/assistant-10.png)
+    > Note: <YOURSECRET> can be any text string that helps to keep your cloud functions secure. Note down <YOURSECRET> for future reference. For example, `team1a`.
+
+1. Verify the action cloud function was created succerssfully.
+
+   ```
+   ibmcloud  fn  action  list  assistant-operation
+   ```
+
+Alternatively, you may also deploy the Cloud Function via IBM Cloud UI.
+
+
+#### Step 4.2 - Create Cloud Function Trigger
+
+Now, you have deployed a cloud function. If you like, you can launch the cloud function manually, get input from JSON file in S3 bucket and start a Watson Assistant skill deployment process.
+
+However, the objective of this repo is to automate the Watson Assistant skill deployment process. You like to automatically launch the cloud function when a JSON file is moved to a S3 bucket. For this automation, you need to define a IBM Cloud Function `trigger`.
+
+1. In your `IBM Cloud Shell`, create a trigger `assistant-auto-deployment` that fires when a JSON is uploaded to your specified S3 bucket `$BUCKET_NAME`.
+
+   ```
+    ibmcloud fn trigger create assistant-auto-deployment --feed /whisk.system/cos/changes --param bucket $BUCKET_NAME --param suffix "json" --param event_types write
+    ```
+
+1. Verify your trigger.
+
+    ```
+    ibmcloud fn trigger get assistant-auto-deployment
+    ```
+
+Alternatively, you may also create the Cloud Function trigger via IBM Cloud UI.
+
+
+#### Step 4.3 - Create Cloud Function Rule
+
+After you have created both cloud function and trigger, you are going to create a `rule` which associates your trigger with your action. With these three components in the IBM Cloud Function defined, your cloud function will be  automatically launched when a JSON file is moved to your S3 bucket.
+
+1. In your `IBM Cloud Shell`, create a rule `assistant-auto-deployment-rule` that fires when a JSON is uploaded to your specified S3 bucket `$BUCKET_NAME`.
+
+    ```
+    ibmcloud fn rule create assistant-auto-deployment-rule assistant-auto-deployment assistant-operation/assistant-deployment
+    ```
+
+1. Verify your rule.
+
+    ```
+    ibmcloud fn rule get assistant-auto-deployment-rule
+    ```
+
+Alternatively, you may also associate your Cloud Function trigger and action via IBM Cloud UI.
+
+
+#### Step 4.4 - Bind Cloud Function Package to Services in IBM Cloud
+
+Cloud Function package helps organize your Cloud Function actions. Typically, you have all actions for one job category under one package. For example, you created package `assistant-operation` in the previous section and then you created action `assistant-deployment` in the package. The action is referred as `assistant-operation/assistant-deployment`. When you create another action for skill backup automation, you may use the same package.
+
+Cloud Function action communicates with services in IBM Cloud. It uses parameters to store service credentials for the connectivity to services in IBM Cloud. You may add action parameter manually. Or, you can `bind` services in IBM Cloud to Cloud Function action. After binding, the service credentials are automatically added to the action.
+
+You have choice to `bind` parameters to individual action or to a package. When you bind parameters to a package, all of the actions within the package inherit those parameters unless otherwise specified.
+
+For this exercise, the Cloud Function interacts with 2 services in IBM Cloud.
+- Cloud Object Storage
+- Watson Assistant
+
+For `Cloud Object Storage` instance, its name and credentials are stored in environment variable `$S3_NAME` and `$S3_CREDNETIAL` in the previous sections.
+
+For `Watson Assistant` instance, its name and credentials are stored in environment variable `$ASSISTANT_NAME` and `$ASSISTANT_CREDNETIAL` in the previous sections.
+
+1. Bind Cloud Function package `assistant-operation` and Cloud Object Storage instance.
+
+    ```
+    ibmcloud fn service bind cloud-object-storage $CF_PACKAGE --instance $S3_NAME --keyname $S3_CREDENTIAL
+    ```
+
+1. Verify the binding. You should see one `cloud-object-storage` credential in the package.
+
+    ```
+    ibmcloud fn package get $CF_PACKAGE
+    ```
+
+1. Bind Cloud Function package `assistant-operation` and Watson Assistant instance.
+
+    ```
+    ibmcloud fn service bind conversation $CF_PACKAGE --instance $ASSISTANT_NAME --keyname $ASSISTANT_CREDENTIAL
+    ```
+
+1. Verify the binding. You should see both `conversation` and `cloud-object-storage` credential in the package.
+
+    ```
+    ibmcloud fn package get $CF_PACKAGE
+    ```
+
+
+### Step 5 - Verification
+
+Couple of sample JSON files are provided in data/ subfolder for verifying your Watson Assistant skill deployment automation.
+
+
+#### Step 5.1 - Create a New Skill
+
+
+
+#### Step 5.1.1 - Upload Sample JSON File
+
+1. Login to IBM Cloud in a browser. https://cloud.ibm.com.
+
+1. Search and open your Cloud Object Storage instance.
+
+1. Select `Buckets` link in the left navigation pane.
+
+1.  Select `cos-ibm-garage-assistant-operation-<your initial>` bucket from the bucket list.
+
+    !["cos"](docs/images/cos-01.png)
+
+1. Select the `Drag and drop files (objects) here or click to upload` link at the bottom of the screen.
+
+1. Select file data/skill-auto-deployment.json in the folder where you downloaded the repo.
+
+1. Close the two pop-up windows if necessary.
+
+1. You should have one JSON file `skill-auto-deployment.json` stored in the bucket.
+
+    !["cos"](docs/images/cos-02.png)
+
+1. 
+
+
+
+#### Step 5.2 - Update an Existing Skill
+
+1. Login to IBM Cloud in a browser. https://cloud.ibm.com.
+
+1. Search and open your Cloud Object Storage instance.
+
+1. 
+
+
 
 
 ## License
