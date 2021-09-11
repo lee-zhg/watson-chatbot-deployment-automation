@@ -125,7 +125,7 @@ To identify your IBM Cloud Object Storage Instance name,
 1. Retrieve additional information for your IBM Cloud Object Storage instance.
 
     ```
-    ibmcloud resource  service-instance <your IBM Cloud Object Storage instance name>
+    ibmcloud resource  service-instance "$S3_NAME"
     ```
 
     For example,
@@ -165,16 +165,27 @@ To identify your IBM Cloud Object Storage Instance name,
     export S3_GUID="a21da977-07c2-41ff-a2f4-a90134be92d0"
     ```
 
-1. Confirm the `ID` in the environment variable.
+1. Confirm the `GUID` in the environment variable.
 
     ```
     echo $S3_GUID
     ```
 
+1. Store `ID` in environment variable.
+
+    ```
+    export S3_ID="crn:v1:bluemix:public:cloud-object-storage:global:a/d31616cb766c4803baf1441fbd96b066:a21da977-07c2-41ff-a2f4-a90134be92d0::"
+    ```
+
+1. Confirm the `ID` in the environment variable.
+
+    ```
+    echo $S3_ID
+    ```
 1. Configure s3 plugin configuration to point to your IBM Cloud Object Storage instance.
 
     ```
-    ibmcloud cos config crn --crn $S3_GUID
+    ibmcloud cos config crn --crn "$S3_GUID"
     ```
 
 1. Verify the s3 plugin configuration.
@@ -212,18 +223,18 @@ To create a new bucket `cos-ibm-garage-assistant-operation-<your initial>` in yo
 1. Execute command
 
     ```
-    ibmcloud cos create-bucket --bucket $BUCKET_NAME --region us-south --class SMART
+    ibmcloud cos create-bucket --bucket "$BUCKET_NAME" --region us-south --class SMART
     ```
 
 1. Optionally, you may pass your IBM Cloud Object Storage instance as part of the above command
     ```
-    ibmcloud cos create-bucket --bucket $BUCKET_NAME --region us-south --class SMART --ibm-service-instance-id $S3_ID
+    ibmcloud cos create-bucket --bucket "$BUCKET_NAME" --region us-south --class SMART --ibm-service-instance-id "$S3_ID"
     ```
 
 1. Verify the new bucket was created successfully.
 
     ```
-    ibmcloud cos bucket-location-get --bucket $BUCKET_NAME
+    ibmcloud cos bucket-location-get --bucket "$BUCKET_NAME"
     ```
 
 Alternatively, you may also create S3 bucket via IBM Cloud UI.
@@ -242,13 +253,13 @@ For simplicity, a new credential `ibm-garage-cos-assistant-operation` is created
 1. Create a new credential `ibm-garage-cos-assistant-operation` for your Cloud Object Storage instance.
 
     ```
-    ibmcloud resource service-key-create $S3_CREDENTIAL --instance-name $S3_NAME
+    ibmcloud resource service-key-create "$S3_CREDENTIAL" Writer --instance-name "$S3_NAME"
     ```
 
 1. Verify the new credential.
 
     ```
-    ibmcloud resource service-key $S3_CREDENTIAL 
+    ibmcloud resource service-key "$S3_CREDENTIAL" 
     ```
 
 
@@ -298,16 +309,16 @@ For simplicity, a new credential `ibm-garage-assistant-operation` is created for
     export ASSISTANT_NAME="Watson Assistant-j3"
     ```
 
-1. Create a new credential `ibm-garage-cos-assistant-operation` for your Cloud Object Storage instance.
+1. Create a new credential `ibm-garage-assistant-operation` for your Watson Assistant instance.
 
     ```
-    ibmcloud resource service-key-create $ASSISTANT_CREDENTIAL --instance-name $ASSISTANT_NAME
+    ibmcloud resource service-key-create "$ASSISTANT_CREDENTIAL" Manager --instance-name "$ASSISTANT_NAME"
     ```
 
 1. Verify the new credential.
 
     ```
-    ibmcloud resource service-key $ASSISTANT_CREDENTIAL
+    ibmcloud resource service-key "$ASSISTANT_CREDENTIAL"
     ```
 
 
@@ -338,22 +349,22 @@ In this section, you deploy your code as a service in IBM Cloud Function. Becaus
    ibmcloud fn property set --namespace <my namespace>
    ```
 
-1. Create package
-
-   ```
-   ibmcloud fn package create assistant-operation
-   ```
-
 1. Store new package name `assistant-operation` in environment variable.
 
     ```
     export CF_PACKAGE="assistant-operation"
     ```
 
+1. Create package
+
+   ```
+   ibmcloud fn package create "$CF_PACKAGE"
+   ```
+
 1. Create action for setup using Node.js environment
 
    ```
-   ibmcloud  fn  action  create  assistant-operation/assistant-deployment  app.js  --kind nodejs:12  --web  true  --web-secure  <YOURSECRET>
+   ibmcloud  fn  action  create  "$CF_PACKAGE"/assistant-deployment  app.js  --kind nodejs:12  --web  true  --web-secure  <YOURSECRET>
    ```
 
     > Note: <YOURSECRET> can be any text string that helps to keep your cloud functions secure. Note down <YOURSECRET> for future reference. For example, `team1a`.
@@ -361,7 +372,7 @@ In this section, you deploy your code as a service in IBM Cloud Function. Becaus
 1. Verify the action cloud function was created succerssfully.
 
    ```
-   ibmcloud  fn  action  list  assistant-operation
+   ibmcloud  fn  action  list  "$CF_PACKAGE"
    ```
 
 Alternatively, you may also deploy the Cloud Function via IBM Cloud UI.
@@ -376,7 +387,7 @@ However, the objective of this repo is to automate the Watson Assistant skill de
 1. In your `IBM Cloud Shell`, create a trigger `assistant-auto-deployment` that fires when a JSON is uploaded to your specified S3 bucket `$BUCKET_NAME`.
 
    ```
-    ibmcloud fn trigger create assistant-auto-deployment --feed /whisk.system/cos/changes --param bucket $BUCKET_NAME --param suffix "json" --param event_types write
+    ibmcloud fn trigger create assistant-auto-deployment --feed /whisk.system/cos/changes --param bucket "$BUCKET_NAME" --param suffix "json" --param event_types write
     ```
 
 1. Verify your trigger.
@@ -395,7 +406,7 @@ After you have created both cloud function and trigger, you are going to create 
 1. In your `IBM Cloud Shell`, create a rule `assistant-auto-deployment-rule` that fires when a JSON is uploaded to your specified S3 bucket `$BUCKET_NAME`.
 
     ```
-    ibmcloud fn rule create assistant-auto-deployment-rule assistant-auto-deployment assistant-operation/assistant-deployment
+    ibmcloud fn rule create assistant-auto-deployment-rule assistant-auto-deployment "$CF_PACKAGE"/assistant-deployment
     ```
 
 1. Verify your rule.
@@ -426,25 +437,25 @@ For `Watson Assistant` instance, its name and credentials are stored in environm
 1. Bind Cloud Function package `assistant-operation` and Cloud Object Storage instance.
 
     ```
-    ibmcloud fn service bind cloud-object-storage $CF_PACKAGE --instance $S3_NAME --keyname $S3_CREDENTIAL
+    ibmcloud fn service bind cloud-object-storage "$CF_PACKAGE" --instance "$S3_NAME" --keyname "$S3_CREDENTIAL"
     ```
 
 1. Verify the binding. You should see one `cloud-object-storage` credential in the package.
 
     ```
-    ibmcloud fn package get $CF_PACKAGE
+    ibmcloud fn package get "$CF_PACKAGE"
     ```
 
 1. Bind Cloud Function package `assistant-operation` and Watson Assistant instance.
 
     ```
-    ibmcloud fn service bind conversation $CF_PACKAGE --instance $ASSISTANT_NAME --keyname $ASSISTANT_CREDENTIAL
+    ibmcloud fn service bind conversation "$CF_PACKAGE" --instance "$ASSISTANT_NAME" --keyname "$ASSISTANT_CREDENTIAL"
     ```
 
 1. Verify the binding. You should see both `conversation` and `cloud-object-storage` credential in the package.
 
     ```
-    ibmcloud fn package get $CF_PACKAGE
+    ibmcloud fn package get "$CF_PACKAGE"
     ```
 
 
@@ -455,6 +466,7 @@ Couple of sample JSON files are provided in data/ subfolder for verifying your W
 
 #### Step 5.1 - Create a New Skill
 
+If you are doing this exercise the first time, `auto-deployment` skill should not exist in your Watson Assistant instance. Steps in this section will create it.
 
 
 #### Step 5.1.1 - Upload Sample JSON File
@@ -471,27 +483,81 @@ Couple of sample JSON files are provided in data/ subfolder for verifying your W
 
 1. Select the `Drag and drop files (objects) here or click to upload` link at the bottom of the screen.
 
-1. Select file data/skill-auto-deployment.json in the folder where you downloaded the repo.
+1. Select file `data/skill-auto-deployment.json` in the folder where you downloaded the repo.
 
-1. Close the two pop-up windows if necessary.
+1. Close the any pop-up window(s) if necessary.
 
 1. You should have one JSON file `skill-auto-deployment.json` stored in the bucket.
 
     !["cos"](docs/images/cos-02.png)
 
-1. 
 
+##### Step 5.1.2 - Verify New Skill
+
+To verify the skill `auto-deployment` was deployed to your Watson Assistant instance,
+
+1. Open a new browsser tab.
+
+1. Search and Open your Watson Assistant instance.
+
+1. Select `Launch Watson Assistant` button.
+
+1. Navigate to `Skills` tab  in the left pane.
+
+1. Skill `auto-deployment` should appear in the main window.
+
+1. Select the skill `auto-deployment` to open it and view its `intents`.
+
+    !["cos"](docs/images/assistant-01.png)
+
+1. Intent `test` does not appears on the intent list.
 
 
 #### Step 5.2 - Update an Existing Skill
+
+Steps in this section illustrates that automatic skill deployment can also update an existing skill.
+
+
+#### Step 5.2.1 - Upload Sample JSON File
 
 1. Login to IBM Cloud in a browser. https://cloud.ibm.com.
 
 1. Search and open your Cloud Object Storage instance.
 
-1. 
+1. Select `Buckets` link in the left navigation pane.
+
+1.  Select `cos-ibm-garage-assistant-operation-<your initial>` bucket from the bucket list.
+
+    !["cos"](docs/images/cos-01.png)
+
+1. Select the `Drag and drop files (objects) here or click to upload` link at the bottom of the screen.
+
+1. Select file `data/skill-auto-deployment-more.json` in the folder where you downloaded the repo.
+
+1. Close the any pop-up window(s) if necessary.
+
+1. You should have one JSON file `skill-auto-deployment-more.json` stored in the bucket.
 
 
+##### Step 5.2.2 - Verify Skill Update
+
+To verify the skill `auto-deployment` was updated in your Watson Assistant instance,
+
+1. Open a new browsser tab.
+
+1. Search and Open your Watson Assistant instance.
+
+1. Select `Launch Watson Assistant` button.
+
+1. Navigate to `Skills` tab  in the left pane.
+
+1. Skill `auto-deployment` should appear in the main window.
+
+1. Select the skill `auto-deployment` to open it and view its `intents`.
+
+    !["cos"](docs/images/assistant-02.png)
+
+1. Intent `test` was added on the intent list.
 
 
 ## License

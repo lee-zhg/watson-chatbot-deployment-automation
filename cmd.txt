@@ -24,6 +24,12 @@ To Verify the binding. (You should see one `cloud-object-storage` credential in 
 
 
 
+To unbind services
+	ibmcloud fn service unbind cloud-object-storage "$CF_PACKAGE" -i
+	ibmcloud fn service unbind conversation "$CF_PACKAGE" -i
+
+
+
 To retrieve cloud function trigger
 	ibmcloud fn trigger get mytrigger
 
